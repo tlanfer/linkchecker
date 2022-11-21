@@ -42,6 +42,7 @@ func (u *Ui) onReady() {
 	<-menuItem.ClickedCh
 	u.quit <- "quit"
 	systray.Quit()
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (u *Ui) onExit() {}
