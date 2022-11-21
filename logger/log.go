@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 func New(filename string) *Logger {
@@ -26,24 +27,41 @@ type event struct {
 }
 
 func (l *Logger) Start() error {
-	file, err := os.OpenFile(l.filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to open log file: %w", err)
-	}
+
+	files := map[string]*os.File{}
 
 	go func() {
 		for {
 			select {
 			case e := <-l.events:
-				fmt.Fprintf(file, "%v,%v,%v\n", e.Host, e.PacketLoss, e.Rtt)
+				l, exists := files[e.Host]
+				if !exists {
+					f, err := open(e.Host)
+					if err != nil {
+						panic(err)
+					}
+					l = f
+				}
+				timestamp := time.Now().Format("2006-01-02 15:04:05")
+				fmt.Fprintf(l, "%v,%v,%v,%v\n", timestamp, e.Host, e.PacketLoss, e.Rtt)
 			case <-l.stop:
-				file.Close()
+				for _, file := range files {
+					file.Close()
+				}
 				return
 			}
 		}
 	}()
 
 	return nil
+}
+
+func open(hostname string) (*os.File, error) {
+	file, err := os.OpenFile(fmt.Sprintf("monitor_%v.log", hostname), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open log file: %w", err)
+	}
+	return file, nil
 }
 
 func (l *Logger) Stop() {
