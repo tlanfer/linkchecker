@@ -8,7 +8,10 @@ Download [here](https://github.com/tlanfer/linkchecker/releases/tag/latest).
 
 Start the executable. Windows may complain. Tell windows to shut up.
 
-The program will create a default config with sensible defaults. You can change it if you want.
+There should be a twiggieJustRight in your windows tray.
+If a host does not answer below the threshold, it will be written to a log file, and the tray icon will change to twiggieYell for a few seconds.
+
+The program will create a config file `config.yaml` with sensible defaults. You can change it if you want.
 
 ```yaml
 prefix: monitor_
