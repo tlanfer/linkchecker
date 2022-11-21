@@ -46,3 +46,7 @@ The columns are
 * host
 * Packageloss percentage
 * Round-trip-time ("ping")
+
+# License
+
+No idea why anyone would care about the license of this thing, but if you do, see [LICENSE.md](LICENSE.md).
