@@ -37,7 +37,7 @@ func (m *Monitor) Start() {
 				if err != nil {
 					log.Println("Pinger failed:", err)
 				}
-				m.log.Log(m.host, stats.PacketLoss, stats.AvgRtt.Milliseconds())
+				m.log.Log(m.host, stats.PacketLoss, stats.AvgRtt)
 				if stats.PacketLoss > 0 {
 					m.ui.Broken()
 				}

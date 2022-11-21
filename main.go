@@ -10,7 +10,7 @@ import (
 func main() {
 	c := config.Load()
 	ui := trayicon.New()
-	l := logger.New(c.LogFile)
+	l := logger.New(c.Prefix, c.Threshold)
 	l.Start()
 
 	var ms []*monitor.Monitor

@@ -3,27 +3,30 @@ package logger
 import (
 	"fmt"
 	"os"
+	"pinglog/config"
 	"time"
 )
 
-func New(filename string) *Logger {
+func New(prefix string, threshold config.Threshold) *Logger {
 	return &Logger{
-		filename: filename,
-		stop:     make(chan any),
-		events:   make(chan event, 1),
+		prefix:    prefix,
+		threshold: threshold,
+		stop:      make(chan any),
+		events:    make(chan event, 1),
 	}
 }
 
 type Logger struct {
-	filename string
-	stop     chan any
-	events   chan event
+	prefix    string
+	stop      chan any
+	events    chan event
+	threshold config.Threshold
 }
 
 type event struct {
 	Host       string
 	PacketLoss float64
-	Rtt        int64
+	Rtt        time.Duration
 }
 
 func (l *Logger) Start() error {
@@ -34,16 +37,19 @@ func (l *Logger) Start() error {
 		for {
 			select {
 			case e := <-l.events:
-				l, exists := files[e.Host]
+				file, exists := files[e.Host]
 				if !exists {
-					f, err := open(e.Host)
+					f, err := l.open(e.Host)
 					if err != nil {
 						panic(err)
 					}
-					l = f
+					file = f
 				}
-				timestamp := time.Now().Format("2006-01-02 15:04:05")
-				fmt.Fprintf(l, "%v,%v,%v,%v\n", timestamp, e.Host, e.PacketLoss, e.Rtt)
+
+				if e.PacketLoss > l.threshold.PacketLoss || e.Rtt > l.threshold.Rtt {
+					timestamp := time.Now().Format("2006-01-02 15:04:05")
+					fmt.Fprintf(file, "%v,%v,%v,%v\n", timestamp, e.Host, e.PacketLoss, e.Rtt.Milliseconds())
+				}
 			case <-l.stop:
 				for _, file := range files {
 					file.Close()
@@ -56,8 +62,8 @@ func (l *Logger) Start() error {
 	return nil
 }
 
-func open(hostname string) (*os.File, error) {
-	file, err := os.OpenFile(fmt.Sprintf("monitor_%v.log", hostname), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
+func (l *Logger) open(hostname string) (*os.File, error) {
+	file, err := os.OpenFile(fmt.Sprintf("%v%v.log", l.prefix, hostname), os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open log file: %w", err)
 	}
@@ -68,7 +74,7 @@ func (l *Logger) Stop() {
 	l.stop <- struct{}{}
 }
 
-func (l *Logger) Log(host string, packetLoss float64, rtt int64) {
+func (l *Logger) Log(host string, packetLoss float64, rtt time.Duration) {
 	l.events <- event{
 		Host:       host,
 		PacketLoss: packetLoss,

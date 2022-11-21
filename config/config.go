@@ -9,27 +9,37 @@ import (
 const configFile = "config.yaml"
 
 type Config struct {
-	LogFile  string        `yaml:"log_file"`
-	Interval time.Duration `yaml:"interval"`
-	Hosts    []string      `yaml:"hosts"`
+	Prefix    string        `yaml:"prefix"`
+	Interval  time.Duration `yaml:"interval"`
+	Threshold Threshold     `json:"threshold"`
+	Hosts     []string      `yaml:"hosts"`
+}
+
+type Threshold struct {
+	PacketLoss float64       `yaml:"packet_loss"`
+	Rtt        time.Duration `json:"rtt"`
 }
 
 func Load() Config {
+	c := Config{
+		"monitor_",
+		15 * time.Second,
+		Threshold{
+			PacketLoss: 0,
+			Rtt:        100 * time.Millisecond,
+		},
+		[]string{"youtube.com", "twitch.tv", "regjeringen.no"},
+	}
+
 	f, err := os.OpenFile(configFile, os.O_RDONLY, os.ModePerm)
 	defer f.Close()
 	if err != nil {
 		if os.IsNotExist(err) {
-			defaultConfig := Config{
-				"log.csv",
-				15 * time.Second,
-				[]string{"youtube.com", "twitch.com"},
-			}
-			Save(defaultConfig)
-			return defaultConfig
+			Save(c)
+			return c
 		}
 	}
 
-	c := Config{}
 	yaml.NewDecoder(f).Decode(&c)
 	return c
 }
