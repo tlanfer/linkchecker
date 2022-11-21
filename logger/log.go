@@ -46,7 +46,7 @@ func (l *Logger) Start() error {
 					file = f
 				}
 
-				if e.PacketLoss > l.threshold.PacketLoss || e.Rtt > l.threshold.Rtt {
+				if e.PacketLoss >= l.threshold.PacketLoss || e.Rtt >= l.threshold.Rtt {
 					timestamp := time.Now().Format("2006-01-02 15:04:05")
 					fmt.Fprintf(file, "%v,%v,%v,%v\n", timestamp, e.Host, e.PacketLoss, e.Rtt.Milliseconds())
 				}

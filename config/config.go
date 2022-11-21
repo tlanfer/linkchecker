@@ -25,10 +25,10 @@ func Load() Config {
 		"monitor_",
 		15 * time.Second,
 		Threshold{
-			PacketLoss: 0,
+			PacketLoss: 0.01,
 			Rtt:        100 * time.Millisecond,
 		},
-		[]string{"youtube.com", "twitch.tv", "regjeringen.no"},
+		[]string{"youtube.com", "twitch.tv"},
 	}
 
 	f, err := os.OpenFile(configFile, os.O_RDONLY, os.ModePerm)
